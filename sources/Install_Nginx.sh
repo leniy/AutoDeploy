@@ -12,7 +12,8 @@ groupadd nginx
 useradd -s /sbin/nologin -g nginx nginx
 
 echo "[+] 安装编译环境编译... "
-echo -e "nameserver 114.114.114.114" >> /etc/resolv.conf
+grep -q "114.114.114.114" /etc/resolv.conf
+if [ "$?" -ne "0" ]; then echo "nameserver 114.114.114.114" >> /etc/resolv.conf; fi
 mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
 cp res/CentOS6-Base-163.repo /etc/yum.repos.d/
 yum clean all
