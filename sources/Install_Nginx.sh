@@ -5,13 +5,13 @@
 # Already considered corresponding optimization, and turn on the reverse proxy functions.
 
 Nginx_Ver='nginx-1.10.2'
-Default_Website_Dir='/home/wwwroot/default'
+Default_Website_Dir='/usr/local/nginx/html'
 
-echo "[+] 创建nginx用户和组... "
+echo "[+] Create nginx user and group... "
 groupadd nginx
 useradd -s /sbin/nologin -g nginx nginx
 
-echo "[+] 安装编译环境编译... "
+echo "[+] Install compiling environment... "
 grep -q "114.114.114.114" /etc/resolv.conf
 if [ "$?" -ne "0" ]; then echo "nameserver 114.114.114.114" >> /etc/resolv.conf; fi
 mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
@@ -21,7 +21,7 @@ yum makecache
 yum -y update
 yum -y install make zlib zlib-devel gcc gcc-c++ libtool perl pcre-devel openssl-devel
 
-echo "[+] Nginx源代码编译... "
+echo "[+] Compile Nginx... "
 cd src/
 [[ -d "${Nginx_Ver}" ]] && rm -rf ${Nginx_Ver}
 tar zxf ${Nginx_Ver}.tar.gz
@@ -48,10 +48,11 @@ cd ../
 
 echo "[+] Config nginx... "
 [[ ! -d "/usr/local/nginx/conf/vhost" ]] && mkdir /usr/local/nginx/conf/vhost
-rm -f /usr/local/nginx/conf/nginx.conf
+mv /usr/local/nginx/conf/nginx.conf /usr/local/nginx/conf/nginx.conf.backup
 cp conf/nginx.conf /usr/local/nginx/conf/nginx.conf
 cp conf/vhost/* /usr/local/nginx/conf/vhost/
 [[ ! -d ${Default_Website_Dir} ]] && mkdir -p ${Default_Website_Dir}
+mv ${Default_Website_Dir}/index.html ${Default_Website_Dir}/index.html.backup
 cp res/index.html ${Default_Website_Dir}
 chmod +w ${Default_Website_Dir}
 chown -R nginx:nginx ${Default_Website_Dir}
@@ -71,3 +72,5 @@ chattr +i ${Default_Website_Dir}/.user.ini
 echo "[+] Start nginx service... "
 service iptables stop
 service nginx start
+
+echo "[+] Allright ,enjoy your web... "
