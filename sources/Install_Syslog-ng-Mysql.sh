@@ -6,6 +6,7 @@
 
 MYSQL_ROOT_PASSWORD='leniyroot'
 SYSLOG_NG_DATABASE='leniylogs'
+CONF='/etc/syslog-ng/syslog-ng.conf'
 
 echo "[+] 停止可能有的rsyslog和SELinux服务"
 service rsyslog stop
@@ -43,28 +44,30 @@ chkconfig syslog-ng on
 service syslog-ng start
 
 echo "[+] 配置syslog-ng..."
+grep -q "create_dirs" ${CONF}
+if [ "$?" -eq "0" ]; then
+sed -n '/create_dirs/p' ${CONF}
+sed -i 's/create_dirs (no)/create_dirs (yes)/g' ${CONF}
+sed -n '/create_dirs/p' ${CONF}
+fi
 grep -q "source s_leniynet" /etc/syslog-ng/syslog-ng.conf
 if [ "$?" -ne "0" ]; then
 echo "source s_leniynet { udp(ip(0.0.0.0) port(514));tcp(ip(0.0.0.0) port(514));udp(ip(0.0.0.0) port(1514));tcp(ip(0.0.0.0) port(1514)); };" >> /etc/syslog-ng/syslog-ng.conf
 fi
 grep -q "filter f_leniy_no_debug" /etc/syslog-ng/syslog-ng.conf
 if [ "$?" -ne "0" ]; then
-echo "filter f_leniy_no_debug { not level(debug); };" >> /etc/syslog-ng/syslog-ng.conf
+echo "filter f_leniy_no_debug { not level(debug..info); };" >> /etc/syslog-ng/syslog-ng.conf
 fi
 grep -q "destination d_leniymysql" /etc/syslog-ng/syslog-ng.conf
 if [ "$?" -ne "0" ]; then
 cat >>/etc/syslog-ng/syslog-ng.conf<<EOF
 destination d_leniymysql {
-    sql(
-        type(mysql)
-        host("localhost")
-        username("root")
-        password("${MYSQL_ROOT_PASSWORD}")
-        database("${SYSLOG_NG_DATABASE}")
-        table("logs_\$R_YEAR\$R_MONTH\$R_DAY")
-        columns("sourceip", "host", "r_datetime", "s_datetime", "facility", "priority", "level", "program", "msg")
-        values("\$SOURCEIP", "\$HOST","\$R_YEAR-\$R_MONTH-\$R_DAY \$R_HOUR:\$R_MIN:\$R_SEC","\$S_YEAR-\$S_MONTH-\$S_DAY \$S_HOUR:\$S_MIN:\$S_SEC", "\$FACILITY", "\$PRIORITY", "\$LEVEL", "\$PROGRAM", "\$MSG")
-        indexes("r_datetime", "sourceip")
+    sql(type(mysql) host("localhost")
+        username("root") password("${MYSQL_ROOT_PASSWORD}") database("${SYSLOG_NG_DATABASE}")
+        table("logs_\${R_YEAR}\${R_MONTH}\${R_DAY}")
+        columns("sourceip", "host", "r_isodate", "s_isodate", "facility", "priority", "level", "program", "msg")
+        values("\$SOURCEIP", "\$HOST","\$R_ISODATE","\$S_ISODATE", "\$FACILITY", "\$PRIORITY", "\$LEVEL", "\$PROGRAM", "\$MSG")
+        indexes("r_isodate", "sourceip")
     );
 };
 log { source(s_leniynet); filter(f_leniy_no_debug); destination(d_leniymysql); };

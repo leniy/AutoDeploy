@@ -14,4 +14,4 @@ clone and use root account, just run this command:
 
     cd sources
     chmod +x Install_Syslog-ng-Mysql.sh
-    ./Install_Syslog-ng-Mysql.sh
+    ./Install_Syslog-ng-Mysql.sh | tee -a leniy_install_syslog.log
