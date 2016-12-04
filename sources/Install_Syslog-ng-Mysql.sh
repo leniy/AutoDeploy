@@ -13,6 +13,7 @@ service rsyslog stop
 chkconfig rsyslog off
 sed -i "s/^SELINUX\=enforcing/SELINUX\=disabled/g" /etc/selinux/config
 setenforce 0
+echo "Current selinux status is:"
 getenforce
 
 echo "[+] 更新仓库及已有软件..."
@@ -21,9 +22,9 @@ yum makecache
 yum -y update
 
 echo "[+] 添加EPEL..."
-rpm -ivh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
 rpm -q epel-release
 yum -y install epel-release
+rpm -q epel-release
 
 echo "[+] 校对本机时间..."
 yum -y install ntp ntpdate
