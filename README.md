@@ -10,10 +10,13 @@ Already considered corresponding optimization.
 
 ## Usage
 
-clone and use root account, just run this command:
+Clone or download the zip files and upload to the server
+
+then run these commands by root:
 
     cd sources
-    chmod +x install & ./install | tee -a syslog.log
+    chmod +x install
+    ./install | tee -a syslog.log
 
 ## Document
 
