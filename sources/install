@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# By Leniy Tsan @ 2016.
+# Auto Deploy Centos 6.x and 7.x
+# This is an initialization script for a new centos instalation.
+# Already considered corresponding optimization, and tested in several virtual machines.
+
+Echo_Green(){ echo -e "\e[1;32m$1\e[0m"; }
+
+Echo_Green "[+] 确定系统版本"
+VERSION=`cat /etc/issue | grep '6.'`
+if [ "$VERSION" == "" ];then
+    VERSION='centos7'
+else
+    VERSION='centos6'
+fi
+echo "version is: "${VERSION}
+
+Echo_Green "[+] 更新仓库及已有软件..."
+yum clean all
+yum makecache
+yum -y update
+
+Echo_Green "[+] 安装必要工具..."
+yum -y install epel-release wget ntp ntpdate man perl bind-utils bzip2 curl openssl zip unzip
+rpm -q epel-release
+
+Echo_Green "[+] 关闭SELinux服务"
+echo "Current selinux status is: "`getenforce`
+sed -i "s/SELINUX\=enforcing/SELINUX\=disabled/g" /etc/selinux/config
+echo "Start set selinux..."
+setenforce 0
+echo "Now, current selinux status is: "`getenforce`
+echo "It should be Permissive or Disabled, CAN NOT be Enforcing"
+
+Echo_Green "[+] 校对本机时间并每天同步..."
+if [ "`cat /etc/crontab | grep ntpdate`" = "" ]; then
+echo "0 1 * * * root /usr/sbin/ntpdate cn.pool.ntp.org >> /var/log/ntpdate.log" >> /etc/crontab
+echo "2 1 * * * root /usr/sbin/ntpdate cn.ntp.org.cn >> /var/log/ntpdate.log" >> /etc/crontab
+fi
+ntpdate -u cn.pool.ntp.org
+ntpdate -u cn.ntp.org.cn
+hwclock -w
+
+Echo_Green "======================"
+Echo_Green "= Auto Deploy Centos ="
+Echo_Green "=  Powered by Leniy  ="
+Echo_Green "======================"
