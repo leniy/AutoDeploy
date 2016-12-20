@@ -34,6 +34,8 @@ echo "Now, current selinux status is: "`getenforce`
 echo "It should be Permissive or Disabled, CAN NOT be Enforcing"
 
 Echo_Green "[+] 校对本机时间并每天同步..."
+echo "Current time is: "`date`
+echo "Start sync clock..."
 if [ "`cat /etc/crontab | grep ntpdate`" = "" ]; then
 echo "0 1 * * * root /usr/sbin/ntpdate cn.pool.ntp.org >> /var/log/ntpdate.log" >> /etc/crontab
 echo "2 1 * * * root /usr/sbin/ntpdate cn.ntp.org.cn >> /var/log/ntpdate.log" >> /etc/crontab
@@ -41,6 +43,7 @@ fi
 ntpdate -u cn.pool.ntp.org
 ntpdate -u cn.ntp.org.cn
 hwclock -w
+echo "Current time is: "`date`
 
 Echo_Green "======================"
 Echo_Green "= Auto Deploy Centos ="
