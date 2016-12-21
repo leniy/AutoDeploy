@@ -5,26 +5,41 @@
 # This is an initialization script for a new centos instalation.
 # Already considered corresponding optimization, and tested in several virtual machines.
 
-Echo_Green(){ echo -e "\e[1;32m$1\e[0m"; }
+Echo_Green(){
+echo -e "\e[1;32m$1\e[0m";
+}
 
+Echo_Green "======================"
+Echo_Green "= Auto Deploy Centos ="
+Echo_Green "=  Powered by Leniy  ="
+Echo_Green "======================"
+
+if [[ "$(whoami)" != "root" ]]; then
+echo "请使用root执行本脚本" >&2
+exit 1
+fi
+
+check_version(){
 Echo_Green "[+] 确定系统版本"
 VERSION=`cat /etc/issue | grep '6.'`
 if [ "$VERSION" == "" ];then
-    VERSION='centos7'
+VERSION='centos7'
 else
-    VERSION='centos6'
+VERSION='centos6'
 fi
 echo "version is: "${VERSION}
+}
 
-Echo_Green "[+] 更新仓库及已有软件..."
+yum_update(){
+Echo_Green "[+] 更新仓库、已有软件并安装必要工具..."
 yum clean all
 yum makecache
 yum -y update
-
-Echo_Green "[+] 安装必要工具..."
 yum -y install epel-release wget ntp ntpdate man perl bind-utils bzip2 curl openssl zip unzip
 rpm -q epel-release
+}
 
+close_selinux(){
 Echo_Green "[+] 关闭SELinux服务"
 echo "Current selinux status is: "`getenforce`
 sed -i "s/SELINUX\=enforcing/SELINUX\=disabled/g" /etc/selinux/config
@@ -32,7 +47,9 @@ echo "Start set selinux..."
 setenforce 0
 echo "Now, current selinux status is: "`getenforce`
 echo "It should be Permissive or Disabled, CAN NOT be Enforcing"
+}
 
+sync_ntptime(){
 Echo_Green "[+] 校对本机时间并每天同步..."
 echo "Current time is: "`date`
 echo "Start sync clock..."
@@ -44,6 +61,65 @@ ntpdate -u cn.pool.ntp.org
 ntpdate -u cn.ntp.org.cn
 hwclock -w
 echo "Current time is: "`date`
+}
+
+ulimit_config(){
+Echo_Green "[+] 更改ulimit参数..."
+if [ "`cat /etc/security/limits.conf | grep 'soft nproc 65535'`" = "" ]; then
+cat  >> /etc/security/limits.conf << EOF
+* soft nproc 65535
+* hard nproc 65535
+* soft nofile 65535
+* hard nofile 65535
+EOF
+echo "ulimit -SHn 65535" >> /etc/profile
+echo "ulimit -SHn 65535" >> /etc/rc.local
+fi
+}
+
+sshd_config(){
+Echo_Green "[+] 加快ssh连接速度..."
+sed -i "s/\#UseDNS yes/UseDNS no/g" /etc/ssh/sshd_config
+sed -i "s/GSSAPIAuthentication yes/GSSAPIAuthentication no/g" /etc/ssh/sshd_config
+if [ "$VERSION" == "centos6" ]; then
+service sshd restart
+else
+systemctl restart sshd
+fi
+}
+
+close_postfix(){
+Echo_Green "[+] 关闭postfix邮件服务..."
+if [ "$VERSION" == "centos6" ]; then
+service postfix stop
+chkconfig postfix off
+else
+systemctl disable postfix.service
+systemctl stop postfix.service
+fi
+}
+
+iptables_config(){
+if [ "$VERSION" == "centos6" ]; then
+echo "防火墙部分还没写..."
+else
+systemctl stop firewalld.service
+systemctl disable firewalld.service
+systemctl mask firewalld.service
+yum -y install iptables-services
+fi
+}
+
+main(){
+check_version
+yum_update
+close_selinux
+sync_ntptime
+ulimit_config
+sshd_config
+close_postfix
+}
+main
 
 Echo_Green "======================"
 Echo_Green "= Auto Deploy Centos ="
