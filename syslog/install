@@ -8,27 +8,12 @@ MYSQL_ROOT_PASSWORD='leniyroot'
 SYSLOG_NG_DATABASE='leniylogs'
 CONF='/etc/syslog-ng/syslog-ng.conf'
 
+echo "[+] 执行Centos系统初始化"
+sh ./AutoDeploy-Centos/sources/install
+
 echo "[+] 停止可能有的rsyslog和SELinux服务"
 service rsyslog stop
 chkconfig rsyslog off
-sed -i "s/^SELINUX\=enforcing/SELINUX\=disabled/g" /etc/selinux/config
-setenforce 0
-echo "Current selinux status is:"
-getenforce
-
-echo "[+] 更新仓库及已有软件..."
-yum clean all
-yum makecache
-yum -y update
-
-echo "[+] 添加EPEL..."
-rpm -q epel-release
-yum -y install epel-release
-rpm -q epel-release
-
-echo "[+] 校对本机时间..."
-yum -y install ntp ntpdate
-ntpdate -u cn.ntp.org.cn
 
 echo "[+] 安装配置MySQL... "
 yum -y install mysql-server

@@ -10,9 +10,9 @@ Already considered corresponding optimization.
 
 ## Usage
 
-Clone or download the zip files and upload to the server
+Clone or download the zip files, unzip them to a folder, and upload to your server.
 
-then run these commands by root:
+Then run these commands by root:
 
     cd sources
     chmod +x install
