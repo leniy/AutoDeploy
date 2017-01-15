@@ -39,6 +39,15 @@ yum -y install epel-release wget ntp ntpdate man perl bind-utils bzip2 curl open
 rpm -q epel-release
 }
 
+set_ps1(){
+PS1='\[\e[32;1m\][\u@\h \t \[\e[33;1m\]\w\[\e[32;1m\]]\$\[\e[0m\] '
+if [ "`cat ~/.bashrc | grep 'PS1'`" = "" ]; then
+cat >> ~/.bashrc << EOF
+PS1='\[\e[32;1m\][\u@\h \t \[\e[33;1m\]\w\[\e[32;1m\]]\$\[\e[0m\] '
+EOF
+fi
+}
+
 close_selinux(){
 Echo_Green "[+] 关闭SELinux服务"
 echo "Current selinux status is: "`getenforce`
@@ -75,6 +84,7 @@ EOF
 echo "ulimit -SHn 65535" >> /etc/profile
 echo "ulimit -SHn 65535" >> /etc/rc.local
 fi
+echo "nofile和nproc成功修改为65535"
 }
 
 sshd_config(){
@@ -84,7 +94,7 @@ sed -i "s/GSSAPIAuthentication yes/GSSAPIAuthentication no/g" /etc/ssh/sshd_conf
 if [ "$VERSION" == "centos6" ]; then
 service sshd restart
 else
-systemctl restart sshd
+systemctl restart sshd.service
 fi
 }
 
@@ -93,15 +103,20 @@ Echo_Green "[+] 关闭postfix邮件服务..."
 if [ "$VERSION" == "centos6" ]; then
 service postfix stop
 chkconfig postfix off
+service postfix status
 else
 systemctl disable postfix.service
 systemctl stop postfix.service
 fi
+echo "已关闭"
 }
 
 iptables_config(){
+Echo_Green "[+] 配置防火墙..."
 if [ "$VERSION" == "centos6" ]; then
-echo "防火墙部分还没写..."
+yum -y install iptables
+service iptables stop
+chkconfig iptables off
 else
 systemctl stop firewalld.service
 systemctl disable firewalld.service
@@ -113,11 +128,13 @@ fi
 main(){
 check_version
 yum_update
+set_ps1
 close_selinux
 sync_ntptime
 ulimit_config
 sshd_config
 close_postfix
+iptables_config
 }
 main
 
