@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# By Leniy Tsan @ 2016.
+# By Leniy Tsan @ 2016-2017.
 # Auto Deploy Centos 6.x and 7.x
 # This is an initialization script for a new centos instalation.
 # Already considered corresponding optimization, and tested in several virtual machines.
@@ -35,15 +35,15 @@ Echo_Green "[+] 更新仓库、已有软件并安装必要工具..."
 yum clean all
 yum makecache
 yum -y update
-yum -y install epel-release wget ntp ntpdate man perl bind-utils bzip2 curl openssl zip unzip
+yum -y install epel-release wget ntp ntpdate man perl bind-utils bzip2 curl openssl zip unzip traceroute vim yum-utils
 rpm -q epel-release
 }
 
 set_ps1(){
-PS1='\[\e[32;1m\][\u@\h \t \[\e[33;1m\]\w\[\e[32;1m\]]\$\[\e[0m\] '
+PS1='\[\e[32;1m\][\[\e[35;1m\]\u@\h \t \[\e[33;1m\]\w\[\e[32;1m\]]\$\[\e[0m\] '
 if [ "`cat ~/.bashrc | grep 'PS1'`" = "" ]; then
 cat >> ~/.bashrc << EOF
-PS1='\[\e[32;1m\][\u@\h \t \[\e[33;1m\]\w\[\e[32;1m\]]\$\[\e[0m\] '
+PS1='\[\e[32;1m\][\[\e[35;1m\]\u@\h \t \[\e[33;1m\]\w\[\e[32;1m\]]\$\[\e[0m\] '
 EOF
 fi
 }
@@ -112,16 +112,14 @@ echo "已关闭"
 }
 
 iptables_config(){
-Echo_Green "[+] 配置防火墙..."
+Echo_Green "[+] 关闭防火墙..."
 if [ "$VERSION" == "centos6" ]; then
-yum -y install iptables
 service iptables stop
 chkconfig iptables off
 else
 systemctl stop firewalld.service
 systemctl disable firewalld.service
 systemctl mask firewalld.service
-yum -y install iptables-services
 fi
 }
 
